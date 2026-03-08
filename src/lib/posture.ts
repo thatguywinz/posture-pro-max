@@ -121,6 +121,16 @@ export interface SmoothingState {
   previousStatus: PostureStatus;
   sustainedImbalanceDuration: number;
   initialized: boolean;
+  // Drift detection: track recent per-sensor values to detect consistent decline
+  recentFront: number[];
+  recentBack: number[];
+  recentLeft: number[];
+  recentRight: number[];
+  // Accumulated drift compensation per sensor
+  driftCompFront: number;
+  driftCompBack: number;
+  driftCompLeft: number;
+  driftCompRight: number;
 }
 
 export function createSmoothingState(): SmoothingState {
@@ -135,6 +145,14 @@ export function createSmoothingState(): SmoothingState {
     previousStatus: "balanced",
     sustainedImbalanceDuration: 0,
     initialized: false,
+    recentFront: [],
+    recentBack: [],
+    recentLeft: [],
+    recentRight: [],
+    driftCompFront: 0,
+    driftCompBack: 0,
+    driftCompLeft: 0,
+    driftCompRight: 0,
   };
 }
 
