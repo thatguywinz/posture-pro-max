@@ -48,7 +48,7 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
-                  Posture Pressure Monitor
+                  Posture Pro
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   Real-time seat pressure intelligence for healthier spinal alignment
