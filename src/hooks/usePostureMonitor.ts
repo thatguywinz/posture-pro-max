@@ -6,6 +6,7 @@ import {
   SmoothingState,
   analyzePosture,
   generateMockData,
+  resetDemoTimer,
   parseSerialData,
   createSmoothingState,
   SUSTAINED_WARNING_DURATION,
