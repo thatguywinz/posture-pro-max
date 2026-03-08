@@ -5,7 +5,6 @@ import {
   SessionStats,
   SmoothingState,
   analyzePosture,
-  generateMockData,
   parseSerialData,
   createSmoothingState,
   SUSTAINED_WARNING_DURATION,
