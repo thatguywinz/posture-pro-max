@@ -36,19 +36,7 @@ export function usePostureMonitor() {
   const processData = useCallback((data: PressureData) => {
     setCurrent(data);
 
-    // Track sustained imbalance: only count if max voltage >= 2V and there's a real diff
-    const maxV = Math.max(data.front, data.back, data.left, data.right);
-    const fbDiff = Math.abs(data.front - data.back);
-    const lrDiff = Math.abs(data.left - data.right);
-    const hasImbalance = maxV >= IMBALANCE_VOLTAGE_THRESHOLD && (fbDiff > IMBALANCE_DIFF_THRESHOLD || lrDiff > IMBALANCE_DIFF_THRESHOLD);
-
-    if (hasImbalance) {
-      sustainedImbalanceRef.current += 0.5; // each tick is 500ms
-    } else {
-      sustainedImbalanceRef.current = 0;
-    }
-
-    const result = analyzePosture(data, calibration, sustainedImbalanceRef.current);
+    const result = analyzePosture(data, calibration);
     setAnalysis(result);
 
     setHistory(prev => {
