@@ -6,8 +6,9 @@ import RecommendationsPanel from "@/components/RecommendationsPanel";
 import TrendsChart from "@/components/TrendsChart";
 import SpineVisualization from "@/components/SpineVisualization";
 import PostureAlert from "@/components/PostureAlert";
-import { Activity, RotateCcw, Play, Pause, Info, Usb, Unplug } from "lucide-react";
+import { Activity, RotateCcw, Play, Pause, Info, Usb, Unplug, BarChart3 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Posture Pro Dashboard v4 — Smoothed scoring
