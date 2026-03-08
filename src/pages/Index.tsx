@@ -93,7 +93,27 @@ const Index = () => {
                 {isDemo ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
                 {isDemo ? "Stop Demo" : "Start Demo"}
               </button>
+
+              {isSerial ? (
+                <button
+                  onClick={disconnectSerial}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20 transition-colors flex items-center gap-1.5"
+                >
+                  <Unplug className="w-3.5 h-3.5" /> Disconnect
+                </button>
+              ) : (
+                <button
+                  onClick={connectSerial}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-glow-good/10 hover:bg-glow-good/20 text-glow-good border border-glow-good/20 transition-colors flex items-center gap-1.5"
+                >
+                  <Usb className="w-3.5 h-3.5" /> Connect Arduino
+                </button>
+              )}
             </div>
+
+            {serialError && (
+              <p className="text-xs text-destructive mt-1">{serialError}</p>
+            )}
           </div>
 
           {/* Onboarding tooltip */}
