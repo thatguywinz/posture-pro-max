@@ -25,7 +25,6 @@ export function usePostureMonitor() {
   const portRef = useRef<any>(null);
   const readerRef = useRef<any>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  
 
   const isDemo = mode === "demo";
   const isConnected = mode !== "disconnected";
