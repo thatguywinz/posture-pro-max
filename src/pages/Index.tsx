@@ -7,26 +7,28 @@ import MetricsCards from "@/components/MetricsCards";
 import TrendsChart from "@/components/TrendsChart";
 import SessionInsights from "@/components/SessionInsights";
 import PostureAlert from "@/components/PostureAlert";
-import { Activity, RotateCcw, Play, Pause, Info } from "lucide-react";
+import { Activity, RotateCcw, Play, Pause, Info, Usb, Unplug } from "lucide-react";
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const Index = () => {
   const {
     current, analysis, history, session,
-    isDemo, isConnected,
-    toggleDemo, calibrate, resetSession,
+    isDemo, isConnected, isSerial, serialError,
+    toggleDemo, connectSerial, disconnectSerial, calibrate, resetSession,
   } = usePostureMonitor();
 
   const [showOnboarding, setShowOnboarding] = useState(false);
 
-  const connectionStatus = isConnected
-    ? isDemo ? "Demo Mode" : "Connected"
-    : "Waiting for Data";
+  const connectionStatus = isSerial
+    ? "Arduino Connected"
+    : isDemo ? "Demo Mode" : "Waiting for Data";
 
-  const statusColor = isConnected
+  const statusColor = isSerial
     ? "bg-glow-good/20 text-glow-good border-glow-good/30"
-    : "bg-glow-warning/20 text-glow-warning border-glow-warning/30";
+    : isConnected
+      ? "bg-primary/20 text-primary border-primary/30"
+      : "bg-glow-warning/20 text-glow-warning border-glow-warning/30";
 
   return (
     <div className="min-h-screen bg-background px-4 py-6 md:px-8 lg:px-12">
@@ -91,7 +93,27 @@ const Index = () => {
                 {isDemo ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
                 {isDemo ? "Stop Demo" : "Start Demo"}
               </button>
+
+              {isSerial ? (
+                <button
+                  onClick={disconnectSerial}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20 transition-colors flex items-center gap-1.5"
+                >
+                  <Unplug className="w-3.5 h-3.5" /> Disconnect
+                </button>
+              ) : (
+                <button
+                  onClick={connectSerial}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-glow-good/10 hover:bg-glow-good/20 text-glow-good border border-glow-good/20 transition-colors flex items-center gap-1.5"
+                >
+                  <Usb className="w-3.5 h-3.5" /> Connect Arduino
+                </button>
+              )}
             </div>
+
+            {serialError && (
+              <p className="text-xs text-destructive mt-1">{serialError}</p>
+            )}
           </div>
 
           {/* Onboarding tooltip */}
