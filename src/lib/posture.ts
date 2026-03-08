@@ -417,33 +417,3 @@ export function analyzePosture(
 }
 
 // ============================================================
-// Mock data generator — produces realistic, calm variation
-// ============================================================
-
-export function generateMockData(): PressureData {
-  const base = 1.2 + Math.random() * 0.3;
-  const smallNoise = () => (Math.random() - 0.5) * 0.15;
-
-  // Occasionally add a slight lean (not dramatic)
-  const lean = Math.random();
-  let front = base + smallNoise();
-  let back = base + smallNoise();
-  let left = base + smallNoise();
-  let right = base + smallNoise();
-
-  if (lean > 0.80) {
-    front += 0.15 + Math.random() * 0.2;
-  } else if (lean > 0.70) {
-    left += 0.1 + Math.random() * 0.15;
-  } else if (lean > 0.60) {
-    right += 0.1 + Math.random() * 0.15;
-  }
-
-  return {
-    front: Math.max(0, parseFloat(front.toFixed(2))),
-    back: Math.max(0, parseFloat(back.toFixed(2))),
-    left: Math.max(0, parseFloat(left.toFixed(2))),
-    right: Math.max(0, parseFloat(right.toFixed(2))),
-    timestamp: Date.now(),
-  };
-}

@@ -84,14 +84,6 @@ const Index = () => {
                 Reset Session
               </button>
 
-              <button
-                onClick={toggleDemo}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors flex items-center gap-1.5"
-              >
-                {isDemo ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                {isDemo ? "Stop Demo" : "Start Demo"}
-              </button>
-
               {isSerial ? (
                 <button
                   onClick={disconnectSerial}
