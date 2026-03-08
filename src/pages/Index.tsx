@@ -7,7 +7,7 @@ import MetricsCards from "@/components/MetricsCards";
 import TrendsChart from "@/components/TrendsChart";
 import SessionInsights from "@/components/SessionInsights";
 import PostureAlert from "@/components/PostureAlert";
-import { Activity, RotateCcw, Play, Pause, Info } from "lucide-react";
+import { Activity, RotateCcw, Play, Pause, Info, Usb, Unplug } from "lucide-react";
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
