@@ -125,10 +125,10 @@ const Index = () => {
               className="glass p-4 text-sm text-muted-foreground space-y-1"
             >
               <p className="font-medium text-foreground">Quadrant Guide</p>
-              <p><strong className="text-primary">Front (A0)</strong> — Front edge of seat, detects forward lean</p>
+              <p><strong className="text-primary">Left (A0)</strong> — Left side, detects lateral tilt</p>
               <p><strong className="text-primary">Back (A1)</strong> — Rear of seat, detects backward lean</p>
-              <p><strong className="text-primary">Left (A2)</strong> — Left side, detects lateral tilt</p>
-              <p><strong className="text-primary">Right (A3)</strong> — Right side, detects lateral tilt</p>
+              <p><strong className="text-primary">Right (A2)</strong> — Right side, detects lateral tilt</p>
+              <p><strong className="text-primary">Front (A3)</strong> — Front edge of seat, detects forward lean</p>
               <p className="text-xs pt-1">Higher voltage = more pressure on that zone. Balanced readings = good posture.</p>
             </motion.div>
           )}
