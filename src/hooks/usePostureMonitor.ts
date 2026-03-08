@@ -118,7 +118,8 @@ export function usePostureMonitor() {
 
   // Connect to Arduino
   const connectSerial = useCallback(async () => {
-    if (!("serial" in navigator)) {
+    const nav = navigator as any;
+    if (!nav.serial) {
       setSerialError("Web Serial API not supported. Use Chrome or Edge.");
       return;
     }
