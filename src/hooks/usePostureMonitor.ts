@@ -5,7 +5,6 @@ import {
   SessionStats,
   SmoothingState,
   analyzePosture,
-  generateMockData,
   parseSerialData,
   createSmoothingState,
   SUSTAINED_WARNING_DURATION,
@@ -13,14 +12,13 @@ import {
 
 const MAX_HISTORY = 600;
 
-type ConnectionMode = "disconnected" | "demo" | "serial";
+type ConnectionMode = "disconnected" | "serial";
 
 export function usePostureMonitor() {
   const [mode, setMode] = useState<ConnectionMode>("disconnected");
   const [current, setCurrent] = useState<PressureData | null>(null);
   const [analysis, setAnalysis] = useState<PostureAnalysis | null>(null);
   const [history, setHistory] = useState<PressureData[]>([]);
-  const [calibration, setCalibration] = useState<PressureData | undefined>();
   const [serialError, setSerialError] = useState<string | null>(null);
   const [session, setSession] = useState<SessionStats>({
     startTime: Date.now(),
@@ -31,21 +29,18 @@ export function usePostureMonitor() {
     currentBalancedStreak: 0,
   });
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const portRef = useRef<any>(null);
   const readerRef = useRef<any>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const smoothingRef = useRef<SmoothingState>(createSmoothingState());
 
-  const isDemo = mode === "demo";
   const isConnected = mode !== "disconnected";
   const isSerial = mode === "serial";
 
   const processData = useCallback((data: PressureData) => {
     setCurrent(data);
 
-    // Analyze with smoothing state (mutated in place for efficiency)
-    const result = analyzePosture(data, smoothingRef.current, calibration, 0.5);
+    const result = analyzePosture(data, smoothingRef.current, undefined, 0.5);
     setAnalysis(result);
 
     setHistory(prev => {
@@ -56,7 +51,6 @@ export function usePostureMonitor() {
     setSession(prev => {
       const elapsed = 0.5;
       const isBalanced = result.status === "balanced";
-      // Only count warnings when sustained
       const isSustainedWarning =
         smoothingRef.current.sustainedImbalanceDuration >= SUSTAINED_WARNING_DURATION;
       const newStreak = isBalanced ? prev.currentBalancedStreak + elapsed : 0;
@@ -69,30 +63,7 @@ export function usePostureMonitor() {
         currentBalancedStreak: newStreak,
       };
     });
-  }, [calibration]);
-
-  // Demo mode
-  const startDemo = useCallback(() => {
-    disconnectSerial();
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setMode("demo");
-    setSerialError(null);
-    smoothingRef.current = createSmoothingState();
-    intervalRef.current = setInterval(() => {
-      processData(generateMockData());
-    }, 500);
-  }, [processData]);
-
-  const stopDemo = useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = null;
-    setMode("disconnected");
   }, []);
-
-  const toggleDemo = useCallback(() => {
-    if (isDemo) stopDemo();
-    else startDemo();
-  }, [isDemo, startDemo, stopDemo]);
 
   // Serial reading loop
   async function readSerialLoop(port: any) {
@@ -143,8 +114,6 @@ export function usePostureMonitor() {
     }
 
     try {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      intervalRef.current = null;
       setSerialError(null);
       smoothingRef.current = createSmoothingState();
 
@@ -193,13 +162,6 @@ export function usePostureMonitor() {
     setMode("disconnected");
   }, []);
 
-  const calibrate = useCallback(() => {
-    if (current) {
-      setCalibration({ ...current, timestamp: Date.now() });
-      smoothingRef.current = createSmoothingState();
-    }
-  }, [current]);
-
   const resetSession = useCallback(() => {
     setSession({
       startTime: Date.now(),
@@ -214,9 +176,7 @@ export function usePostureMonitor() {
   }, []);
 
   useEffect(() => {
-    startDemo();
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
       disconnectSerial();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -226,15 +186,11 @@ export function usePostureMonitor() {
     analysis,
     history,
     session,
-    isDemo,
     isConnected,
     isSerial,
     serialError,
-    calibration,
-    toggleDemo,
     connectSerial,
     disconnectSerial,
-    calibrate,
     resetSession,
     processData,
   };
