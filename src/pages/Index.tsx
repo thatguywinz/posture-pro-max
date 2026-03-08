@@ -75,10 +75,10 @@ const Index = () => {
               </Tooltip>
 
               <button
-                onClick={calibrate}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-colors flex items-center gap-1.5"
+                onClick={() => navigate("/history")}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-accent/10 hover:bg-accent/20 text-accent border border-accent/20 transition-colors flex items-center gap-1.5"
               >
-                <RotateCcw className="w-3.5 h-3.5" /> Calibrate
+                <BarChart3 className="w-3.5 h-3.5" /> Historical Stats
               </button>
 
               <button
