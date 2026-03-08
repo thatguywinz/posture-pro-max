@@ -38,6 +38,7 @@ export interface SessionStats {
 
 const THRESHOLD = 0.25;
 const SLOUCH_THRESHOLD = 0.35;
+const MIN_VOLTAGE_FOR_PENALTY = 2.0; // Don't penalize unless a sensor hits 2V+
 
 export function parseSerialData(line: string): PressureData | null {
   const regex = /A0:\s*([\d.]+)\s*V\s*\|\s*A1:\s*([\d.]+)\s*V\s*\|\s*A2:\s*([\d.]+)\s*V\s*\|\s*A3:\s*([\d.]+)\s*V/;
