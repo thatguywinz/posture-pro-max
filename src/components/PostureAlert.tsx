@@ -7,7 +7,8 @@ interface PostureAlertProps {
 }
 
 export default function PostureAlert({ analysis }: PostureAlertProps) {
-  const showAlert = analysis && (analysis.status === "slouch-risk" || analysis.score < 40);
+  // Only show alert for genuinely poor posture (score < 35), not brief fluctuations
+  const showAlert = analysis && analysis.score < 35;
 
   return (
     <AnimatePresence>
@@ -20,8 +21,10 @@ export default function PostureAlert({ analysis }: PostureAlertProps) {
         >
           <AlertTriangle className="w-5 h-5 text-glow-warning shrink-0" />
           <div>
-            <p className="text-sm font-medium text-foreground">Posture needs attention</p>
-            <p className="text-xs text-muted-foreground">{analysis?.explanation}</p>
+            <p className="text-sm font-medium text-foreground">Consider adjusting your position</p>
+            <p className="text-xs text-muted-foreground">
+              Sustained asymmetry detected — re-centering may improve comfort and reduce prolonged strain.
+            </p>
           </div>
         </motion.div>
       )}
