@@ -1,5 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { PressureData, PostureAnalysis, SessionStats, analyzePosture, generateMockData, parseSerialData } from "@/lib/posture";
+import {
+  PressureData,
+  PostureAnalysis,
+  SessionStats,
+  SmoothingState,
+  analyzePosture,
+  generateMockData,
+  parseSerialData,
+  createSmoothingState,
+  SUSTAINED_WARNING_DURATION,
+} from "@/lib/posture";
 
 const MAX_HISTORY = 600;
 
@@ -25,6 +35,7 @@ export function usePostureMonitor() {
   const portRef = useRef<any>(null);
   const readerRef = useRef<any>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const smoothingRef = useRef<SmoothingState>(createSmoothingState());
 
   const isDemo = mode === "demo";
   const isConnected = mode !== "disconnected";
@@ -33,7 +44,8 @@ export function usePostureMonitor() {
   const processData = useCallback((data: PressureData) => {
     setCurrent(data);
 
-    const result = analyzePosture(data, calibration);
+    // Analyze with smoothing state (mutated in place for efficiency)
+    const result = analyzePosture(data, smoothingRef.current, calibration, 0.5);
     setAnalysis(result);
 
     setHistory(prev => {
@@ -44,13 +56,15 @@ export function usePostureMonitor() {
     setSession(prev => {
       const elapsed = 0.5;
       const isBalanced = result.status === "balanced";
-      const isWarning = result.status === "slouch-risk" || result.status === "leaning-forward" || result.status === "leaning-backward";
+      // Only count warnings when sustained
+      const isSustainedWarning =
+        smoothingRef.current.sustainedImbalanceDuration >= SUSTAINED_WARNING_DURATION;
       const newStreak = isBalanced ? prev.currentBalancedStreak + elapsed : 0;
       return {
         ...prev,
         totalTime: prev.totalTime + elapsed,
         balancedTime: prev.balancedTime + (isBalanced ? elapsed : 0),
-        warningCount: prev.warningCount + (isWarning ? 1 : 0),
+        warningCount: prev.warningCount + (isSustainedWarning ? 1 : 0),
         longestBalancedStreak: Math.max(prev.longestBalancedStreak, newStreak),
         currentBalancedStreak: newStreak,
       };
@@ -63,6 +77,7 @@ export function usePostureMonitor() {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setMode("demo");
     setSerialError(null);
+    smoothingRef.current = createSmoothingState();
     intervalRef.current = setInterval(() => {
       processData(generateMockData());
     }, 500);
@@ -85,7 +100,9 @@ export function usePostureMonitor() {
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
-    const readableStreamClosed = (port.readable as ReadableStream).pipeTo(textDecoder.writable as any, { signal: abortController.signal }).catch(() => {});
+    const readableStreamClosed = (port.readable as ReadableStream)
+      .pipeTo(textDecoder.writable as any, { signal: abortController.signal })
+      .catch(() => {});
     const reader = textDecoder.readable.getReader();
     readerRef.current = reader;
 
@@ -109,7 +126,7 @@ export function usePostureMonitor() {
           }
         }
       }
-    } catch (err) {
+    } catch {
       // Reader cancelled or port disconnected
     } finally {
       reader.releaseLock();
@@ -126,10 +143,10 @@ export function usePostureMonitor() {
     }
 
     try {
-      // Stop demo if running
       if (intervalRef.current) clearInterval(intervalRef.current);
       intervalRef.current = null;
       setSerialError(null);
+      smoothingRef.current = createSmoothingState();
 
       const port = await (navigator as any).serial.requestPort();
       await port.open({ baudRate: 9600 });
@@ -141,16 +158,13 @@ export function usePostureMonitor() {
         setMode("disconnected");
       });
 
-      // Listen for disconnect
       port.addEventListener("disconnect", () => {
         setSerialError("Arduino disconnected.");
         setMode("disconnected");
         portRef.current = null;
       });
     } catch (err: any) {
-      if (err.name === "NotFoundError") {
-        return; // User cancelled the port picker
-      }
+      if (err.name === "NotFoundError") return;
       if (err.message?.includes("permissions policy") || err.name === "SecurityError") {
         setSerialError("Serial access blocked in this context. Open the app directly in Chrome/Edge (not in an iframe) to connect.");
       } else {
@@ -180,7 +194,10 @@ export function usePostureMonitor() {
   }, []);
 
   const calibrate = useCallback(() => {
-    if (current) setCalibration({ ...current, timestamp: Date.now() });
+    if (current) {
+      setCalibration({ ...current, timestamp: Date.now() });
+      smoothingRef.current = createSmoothingState();
+    }
   }, [current]);
 
   const resetSession = useCallback(() => {
@@ -193,6 +210,7 @@ export function usePostureMonitor() {
       currentBalancedStreak: 0,
     });
     setHistory([]);
+    smoothingRef.current = createSmoothingState();
   }, []);
 
   useEffect(() => {

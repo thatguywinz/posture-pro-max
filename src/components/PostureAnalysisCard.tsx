@@ -66,12 +66,9 @@ export default function PostureAnalysisCard({ analysis }: PostureAnalysisCardPro
       </div>
 
       <div className="flex justify-around pt-2">
-        <div className="relative flex flex-col items-center">
-          <ScoreRing score={analysis.score} label="Posture" />
-        </div>
-        <div className="relative flex flex-col items-center">
-          <ScoreRing score={analysis.balanceScore} label="Balance" />
-        </div>
+        <ScoreRing score={analysis.score} label="Posture" />
+        <ScoreRing score={analysis.balanceScore} label="L-R Balance" />
+        <ScoreRing score={analysis.fbBalanceScore} label="F-B Stability" />
       </div>
     </div>
   );
