@@ -2,8 +2,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { PressureData, PostureAnalysis, SessionStats, analyzePosture, generateMockData, parseSerialData } from "@/lib/posture";
 
 const MAX_HISTORY = 600;
-const IMBALANCE_VOLTAGE_THRESHOLD = 2.0;
-const IMBALANCE_DIFF_THRESHOLD = 0.25;
 
 type ConnectionMode = "disconnected" | "demo" | "serial";
 
