@@ -6,9 +6,10 @@ import RecommendationsPanel from "@/components/RecommendationsPanel";
 import TrendsChart from "@/components/TrendsChart";
 import SpineVisualization from "@/components/SpineVisualization";
 import PostureAlert from "@/components/PostureAlert";
-import { Activity, Info, Usb, Unplug } from "lucide-react";
+import { Info, Usb, Unplug } from "lucide-react";
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import spineLogo from "@/assets/spine-logo.png";
 
 const Index = () => {
   const {
