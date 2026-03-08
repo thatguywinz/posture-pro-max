@@ -142,7 +142,7 @@ const Index = () => {
           {/* Left column */}
           <div className="lg:col-span-4 space-y-6">
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
-              <SeatVisualization data={current} />
+              <SeatVisualization data={current} analysis={analysis} />
             </motion.div>
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
               <PostureAnalysisCard analysis={analysis} />
