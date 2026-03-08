@@ -23,25 +23,28 @@ function getScoreColor(score: number): string {
 }
 
 function ScoreRing({ score, label, size = 80 }: { score: number; label: string; size?: number }) {
-  const circumference = 2 * Math.PI * (size / 2 - 6);
+  const radius = size / 2 - 6;
+  const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - score / 100);
 
   return (
     <div className="flex flex-col items-center gap-1">
-      <svg width={size} height={size} className="transform -rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={size / 2 - 6} fill="none" stroke="hsl(var(--border))" strokeWidth="4" />
-        <motion.circle
-          cx={size / 2} cy={size / 2} r={size / 2 - 6}
-          fill="none"
-          stroke={score >= 80 ? "hsl(var(--glow-good))" : score >= 50 ? "hsl(var(--glow-warning))" : "hsl(var(--glow-danger))"}
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        />
-      </svg>
-      <span className={`absolute text-lg font-bold font-mono ${getScoreColor(score)}`}>{score}</span>
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="transform -rotate-90">
+          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="hsl(var(--border))" strokeWidth="4" />
+          <motion.circle
+            cx={size / 2} cy={size / 2} r={radius}
+            fill="none"
+            stroke={score >= 80 ? "hsl(var(--glow-good))" : score >= 50 ? "hsl(var(--glow-warning))" : "hsl(var(--glow-danger))"}
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            animate={{ strokeDashoffset: offset }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          />
+        </svg>
+        <span className={`absolute inset-0 flex items-center justify-center text-lg font-bold font-mono ${getScoreColor(score)}`}>{score}</span>
+      </div>
       <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
     </div>
   );
