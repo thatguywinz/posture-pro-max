@@ -254,10 +254,56 @@ export function analyzePosture(
     state.smoothedRight = ema(state.smoothedRight, right, SMOOTHING_ALPHA);
   }
 
-  const sf = state.smoothedFront;
-  const sb = state.smoothedBack;
-  const sl = state.smoothedLeft;
-  const sr = state.smoothedRight;
+  let sf = state.smoothedFront;
+  let sb = state.smoothedBack;
+  let sl = state.smoothedLeft;
+  let sr = state.smoothedRight;
+
+  // --- Step 1b: Drift detection ---
+  // Track recent smoothed values per sensor. If a sensor has been
+  // consistently declining for DRIFT_DETECTION_WINDOW seconds at a
+  // gradual rate, accumulate a compensation offset so the slow
+  // discharge doesn't look like a posture shift.
+  const maxSamples = Math.ceil(DRIFT_DETECTION_WINDOW / sampleIntervalSec);
+  state.recentFront.push(sf);
+  state.recentBack.push(sb);
+  state.recentLeft.push(sl);
+  state.recentRight.push(sr);
+  if (state.recentFront.length > maxSamples) state.recentFront.shift();
+  if (state.recentBack.length > maxSamples) state.recentBack.shift();
+  if (state.recentLeft.length > maxSamples) state.recentLeft.shift();
+  if (state.recentRight.length > maxSamples) state.recentRight.shift();
+
+  function detectDrift(history: number[]): number {
+    if (history.length < maxSamples) return 0;
+    // Check if every consecutive sample is <= the previous (consistent decline)
+    let totalDrop = 0;
+    let isConsistentDrop = true;
+    for (let j = 1; j < history.length; j++) {
+      const delta = history[j] - history[j - 1];
+      if (delta > 0.005) { // Allow tiny noise upward
+        isConsistentDrop = false;
+        break;
+      }
+      totalDrop += Math.abs(delta);
+    }
+    if (!isConsistentDrop) return 0;
+    const ratePerSec = totalDrop / DRIFT_DETECTION_WINDOW;
+    // Only compensate if rate is gradual (not a real weight shift)
+    return ratePerSec <= DRIFT_RATE_THRESHOLD ? totalDrop : 0;
+  }
+
+  state.driftCompFront = detectDrift(state.recentFront);
+  state.driftCompBack = detectDrift(state.recentBack);
+  state.driftCompLeft = detectDrift(state.recentLeft);
+  state.driftCompRight = detectDrift(state.recentRight);
+
+  // Apply drift compensation — add back the lost voltage so it
+  // doesn't create artificial imbalance
+  sf += state.driftCompFront;
+  sb += state.driftCompBack;
+  sl += state.driftCompLeft;
+  sr += state.driftCompRight;
 
   // --- Step 2: Derived metrics ---
   const totalPressure = sf + sb + sl + sr;
