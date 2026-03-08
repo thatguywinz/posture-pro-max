@@ -6,8 +6,9 @@ import RecommendationsPanel from "@/components/RecommendationsPanel";
 import TrendsChart from "@/components/TrendsChart";
 import SpineVisualization from "@/components/SpineVisualization";
 import PostureAlert from "@/components/PostureAlert";
-import { Activity, RotateCcw, Play, Pause, Info, Usb, Unplug } from "lucide-react";
+import { Activity, RotateCcw, Play, Pause, Info, Usb, Unplug, BarChart3 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Posture Pro Dashboard v4 — Smoothed scoring
@@ -19,6 +20,7 @@ const Index = () => {
   } = usePostureMonitor();
 
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const navigate = useNavigate();
 
   const connectionStatus = isSerial
     ? "Arduino Connected"
@@ -109,6 +111,13 @@ const Index = () => {
                   <Usb className="w-3.5 h-3.5" /> Connect Arduino
                 </button>
               )}
+
+              <button
+                onClick={() => navigate("/history")}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-accent/10 hover:bg-accent/20 text-accent border border-accent/20 transition-colors flex items-center gap-1.5"
+              >
+                <BarChart3 className="w-3.5 h-3.5" /> Historical Stats
+              </button>
             </div>
 
             {serialError && (
