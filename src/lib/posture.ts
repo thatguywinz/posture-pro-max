@@ -79,8 +79,8 @@ const DEAD_ZONE = 0.15;
 /** Voltage difference where mild penalty begins. */
 const MILD_THRESHOLD = 0.5;
 
-/** Voltage difference where strong penalty begins (~2.0V as requested). */
-const STRONG_THRESHOLD = 3.0;
+/** Voltage difference where strong penalty begins. */
+const STRONG_THRESHOLD = 4.0;
 
 /** Maximum penalty per axis at extreme imbalance. */
 const MAX_AXIS_PENALTY = 45;
