@@ -22,13 +22,11 @@ const Index = () => {
 
   const connectionStatus = isSerial
     ? "Arduino Connected"
-    : isDemo ? "Demo Mode" : "Waiting for Data";
+    : "Waiting for Data";
 
   const statusColor = isSerial
     ? "bg-glow-good/20 text-glow-good border-glow-good/30"
-    : isConnected
-      ? "bg-primary/20 text-primary border-primary/30"
-      : "bg-glow-warning/20 text-glow-warning border-glow-warning/30";
+    : "bg-glow-warning/20 text-glow-warning border-glow-warning/30";
 
   return (
     <div className="min-h-screen bg-background px-4 py-6 md:px-8 lg:px-12">
