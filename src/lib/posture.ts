@@ -420,7 +420,7 @@ export function analyzePosture(
 // Mock data generator — produces realistic, calm variation
 // ============================================================
 
-const DEMO_CYCLE_DURATION = 10000; // 10 seconds per direction
+const DEMO_CYCLE_DURATION = 8000; // 8 seconds per direction
 const DEMO_PHASES: Array<"balanced" | "left" | "right" | "front" | "back"> = ["balanced", "left", "right", "front", "back"];
 let demoStartTime: number | null = null;
 
