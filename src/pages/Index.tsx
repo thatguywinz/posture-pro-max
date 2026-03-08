@@ -10,7 +10,7 @@ import { Activity, RotateCcw, Play, Pause, Info, Usb, Unplug } from "lucide-reac
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-// Posture Pro Dashboard v3
+// Posture Pro Dashboard v4 — Smoothed scoring
 const Index = () => {
   const {
     current, analysis, history, session,
