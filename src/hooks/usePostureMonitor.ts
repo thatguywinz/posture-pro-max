@@ -148,10 +148,13 @@ export function usePostureMonitor() {
       });
     } catch (err: any) {
       if (err.name === "NotFoundError") {
-        // User cancelled the port picker
-        return;
+        return; // User cancelled the port picker
       }
-      setSerialError(err.message || "Failed to connect to serial port.");
+      if (err.message?.includes("permissions policy") || err.name === "SecurityError") {
+        setSerialError("Serial access blocked in this context. Open the app directly in Chrome/Edge (not in an iframe) to connect.");
+      } else {
+        setSerialError(err.message || "Failed to connect to serial port.");
+      }
     }
   }, [processData]);
 
