@@ -12,20 +12,33 @@ function getIntensity(value: number): number {
 
 type QuadrantSide = "front" | "back" | "left" | "right";
 
-const LEAN_MAP: Record<string, QuadrantSide> = {
-  "leaning-left": "left",
-  "leaning-right": "right",
-  "leaning-forward": "front",
-  "slouch-risk": "front",
-  "leaning-backward": "back",
-};
+/** Detect leaning by finding the highest voltage sensor (~5V = being leaned on)
+ *  while its opposite is dropping/low (~1V = pressure released). */
+function detectLeaningSide(data: PressureData): QuadrantSide | null {
+  const HIGH_V_THRESHOLD = 3.5;
+  const MIN_DIFF = 1.5;
+
+  const sensors: { side: QuadrantSide; value: number; opposite: number }[] = [
+    { side: "front", value: data.front, opposite: data.back },
+    { side: "back", value: data.back, opposite: data.front },
+    { side: "left", value: data.left, opposite: data.right },
+    { side: "right", value: data.right, opposite: data.left },
+  ];
+
+  const sorted = [...sensors].sort((a, b) => b.value - a.value);
+  const peak = sorted[0];
+
+  if (peak.value >= HIGH_V_THRESHOLD && (peak.value - peak.opposite) >= MIN_DIFF) {
+    return peak.side;
+  }
+
+  return null;
+}
 
 function getColor(intensity: number, isLeaning: boolean): string {
   if (isLeaning) {
-    // Red for the side being leaned on
     return `hsla(0, 72%, 55%, ${0.4 + intensity * 0.4})`;
   }
-  // Calm teal for non-leaning sides
   if (intensity < 0.3) return `hsla(174, 72%, 50%, ${0.15 + intensity * 0.5})`;
   if (intensity < 0.5) return `hsla(160, 60%, 45%, ${0.3 + intensity * 0.5})`;
   return `hsla(174, 60%, 45%, ${0.35 + intensity * 0.4})`;
@@ -65,7 +78,7 @@ function Quadrant({ label, pin, value, isLeaning }: QuadrantProps) {
 
 export default function SeatVisualization({ data, analysis }: SeatVisualizationProps) {
   const d = data || { front: 0, back: 0, left: 0, right: 0, timestamp: 0 };
-  const leaningSide = analysis?.status ? LEAN_MAP[analysis.status] ?? null : null;
+  const leaningSide = data ? detectLeaningSide(d) : null;
 
   return (
     <div className="glass p-6 glow-primary">
