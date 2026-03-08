@@ -3,15 +3,14 @@ import { usePostureMonitor } from "@/hooks/usePostureMonitor";
 import SeatVisualization from "@/components/SeatVisualization";
 import PostureAnalysisCard from "@/components/PostureAnalysisCard";
 import RecommendationsPanel from "@/components/RecommendationsPanel";
-import MetricsCards from "@/components/MetricsCards";
 import TrendsChart from "@/components/TrendsChart";
-import SessionInsights from "@/components/SessionInsights";
+import SpineVisualization from "@/components/SpineVisualization";
 import PostureAlert from "@/components/PostureAlert";
 import { Activity, RotateCcw, Play, Pause, Info, Usb, Unplug } from "lucide-react";
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-// Posture Pro Dashboard v2
+// Posture Pro Dashboard v3
 const Index = () => {
   const {
     current, analysis, history, session,
@@ -156,13 +155,10 @@ const Index = () => {
           {/* Right column */}
           <div className="lg:col-span-8 space-y-6">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-              <MetricsCards data={current} analysis={analysis} />
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
               <TrendsChart history={history} />
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-              <SessionInsights session={session} />
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="min-h-[450px]">
+              <SpineVisualization analysis={analysis} />
             </motion.div>
           </div>
         </div>
