@@ -420,7 +420,7 @@ export function analyzePosture(
 // Mock data generator — produces realistic, calm variation
 // ============================================================
 
-const DEMO_CYCLE_DURATION = 3000; // 3 seconds per direction
+const DEMO_CYCLE_DURATION = 4000; // 4 seconds per direction
 const DEMO_PHASES: Array<"left" | "right" | "front" | "back"> = ["left", "right", "front", "back"];
 let demoStartTime: number | null = null;
 
@@ -430,31 +430,25 @@ export function generateMockData(): PressureData {
   const phaseIndex = Math.floor(elapsed / DEMO_CYCLE_DURATION) % DEMO_PHASES.length;
   const currentPhase = DEMO_PHASES[phaseIndex];
 
-  const base = 1.3;
-  const smallNoise = () => (Math.random() - 0.5) * 0.05;
-  const leanAmount = 0.5 + Math.random() * 0.1;
+  const noise = () => (Math.random() - 0.5) * 0.1;
+  const high = 5.0 + noise();
+  const low = 1.0 + noise();
+  const neutral = 3.0 + noise();
 
-  let front = base + smallNoise();
-  let back = base + smallNoise();
-  let left = base + smallNoise();
-  let right = base + smallNoise();
+  let front = neutral, back = neutral, left = neutral, right = neutral;
 
   switch (currentPhase) {
     case "left":
-      left += leanAmount;
-      right -= leanAmount * 0.3;
+      left = high; right = low;
       break;
     case "right":
-      right += leanAmount;
-      left -= leanAmount * 0.3;
+      right = high; left = low;
       break;
     case "front":
-      front += leanAmount;
-      back -= leanAmount * 0.3;
+      front = high; back = low;
       break;
     case "back":
-      back += leanAmount;
-      front -= leanAmount * 0.3;
+      back = high; front = low;
       break;
   }
 
