@@ -20,6 +20,7 @@ const Index = () => {
   } = usePostureMonitor();
 
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const navigate = useNavigate();
 
   const connectionStatus = isSerial
     ? "Arduino Connected"
