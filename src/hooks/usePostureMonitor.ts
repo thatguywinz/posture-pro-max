@@ -5,6 +5,7 @@ import {
   SessionStats,
   SmoothingState,
   analyzePosture,
+  generateMockData,
   parseSerialData,
   createSmoothingState,
   SUSTAINED_WARNING_DURATION,
@@ -12,7 +13,7 @@ import {
 
 const MAX_HISTORY = 600;
 
-type ConnectionMode = "disconnected" | "serial";
+type ConnectionMode = "disconnected" | "demo" | "serial";
 
 export function usePostureMonitor() {
   const [mode, setMode] = useState<ConnectionMode>("disconnected");
@@ -36,6 +37,7 @@ export function usePostureMonitor() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const smoothingRef = useRef<SmoothingState>(createSmoothingState());
 
+  const isDemo = mode === "demo";
   const isConnected = mode !== "disconnected";
   const isSerial = mode === "serial";
 
@@ -69,6 +71,28 @@ export function usePostureMonitor() {
     });
   }, [calibration]);
 
+  // Demo mode
+  const startDemo = useCallback(() => {
+    disconnectSerial();
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setMode("demo");
+    setSerialError(null);
+    smoothingRef.current = createSmoothingState();
+    intervalRef.current = setInterval(() => {
+      processData(generateMockData());
+    }, 500);
+  }, [processData]);
+
+  const stopDemo = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = null;
+    setMode("disconnected");
+  }, []);
+
+  const toggleDemo = useCallback(() => {
+    if (isDemo) stopDemo();
+    else startDemo();
+  }, [isDemo, startDemo, stopDemo]);
 
   // Serial reading loop
   async function readSerialLoop(port: any) {
@@ -190,6 +214,7 @@ export function usePostureMonitor() {
   }, []);
 
   useEffect(() => {
+    startDemo();
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       disconnectSerial();
@@ -201,10 +226,12 @@ export function usePostureMonitor() {
     analysis,
     history,
     session,
+    isDemo,
     isConnected,
     isSerial,
     serialError,
     calibration,
+    toggleDemo,
     connectSerial,
     disconnectSerial,
     calibrate,
