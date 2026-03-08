@@ -14,8 +14,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 const Index = () => {
   const {
     current, analysis, history, session,
-    isDemo, isConnected,
-    toggleDemo, calibrate, resetSession,
+    isDemo, isConnected, isSerial, serialError,
+    toggleDemo, connectSerial, disconnectSerial, calibrate, resetSession,
   } = usePostureMonitor();
 
   const [showOnboarding, setShowOnboarding] = useState(false);

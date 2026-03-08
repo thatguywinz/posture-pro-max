@@ -129,7 +129,7 @@ export function usePostureMonitor() {
       intervalRef.current = null;
       setSerialError(null);
 
-      const port = await navigator.serial.requestPort();
+      const port = await (navigator as any).serial.requestPort();
       await port.open({ baudRate: 9600 });
       portRef.current = port;
       setMode("serial");
