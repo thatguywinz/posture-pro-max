@@ -79,12 +79,12 @@ export function usePostureMonitor() {
   }, [isDemo, startDemo, stopDemo]);
 
   // Serial reading loop
-  async function readSerialLoop(port: SerialPort) {
+  async function readSerialLoop(port: any) {
     const textDecoder = new TextDecoderStream();
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
-    const readableStreamClosed = port.readable!.pipeTo(textDecoder.writable, { signal: abortController.signal }).catch(() => {});
+    const readableStreamClosed = (port.readable as ReadableStream).pipeTo(textDecoder.writable as any, { signal: abortController.signal }).catch(() => {});
     const reader = textDecoder.readable.getReader();
     readerRef.current = reader;
 
