@@ -100,6 +100,12 @@ const STATUS_THRESHOLD = 0.18;
 /** Normalized imbalance threshold for slouch detection. */
 const SLOUCH_THRESHOLD = 0.28;
 
+/** Duration (seconds) of consistent decline before treating it as charge drift. */
+const DRIFT_DETECTION_WINDOW = 3.0;
+
+/** Max voltage drop per second to qualify as gradual drift (not a real shift). */
+const DRIFT_RATE_THRESHOLD = 0.15;
+
 // ============================================================
 // Smoothing state — maintained across calls
 // ============================================================
@@ -115,6 +121,16 @@ export interface SmoothingState {
   previousStatus: PostureStatus;
   sustainedImbalanceDuration: number;
   initialized: boolean;
+  // Drift detection: track recent per-sensor values to detect consistent decline
+  recentFront: number[];
+  recentBack: number[];
+  recentLeft: number[];
+  recentRight: number[];
+  // Accumulated drift compensation per sensor
+  driftCompFront: number;
+  driftCompBack: number;
+  driftCompLeft: number;
+  driftCompRight: number;
 }
 
 export function createSmoothingState(): SmoothingState {
@@ -129,6 +145,14 @@ export function createSmoothingState(): SmoothingState {
     previousStatus: "balanced",
     sustainedImbalanceDuration: 0,
     initialized: false,
+    recentFront: [],
+    recentBack: [],
+    recentLeft: [],
+    recentRight: [],
+    driftCompFront: 0,
+    driftCompBack: 0,
+    driftCompLeft: 0,
+    driftCompRight: 0,
   };
 }
 
@@ -230,10 +254,56 @@ export function analyzePosture(
     state.smoothedRight = ema(state.smoothedRight, right, SMOOTHING_ALPHA);
   }
 
-  const sf = state.smoothedFront;
-  const sb = state.smoothedBack;
-  const sl = state.smoothedLeft;
-  const sr = state.smoothedRight;
+  let sf = state.smoothedFront;
+  let sb = state.smoothedBack;
+  let sl = state.smoothedLeft;
+  let sr = state.smoothedRight;
+
+  // --- Step 1b: Drift detection ---
+  // Track recent smoothed values per sensor. If a sensor has been
+  // consistently declining for DRIFT_DETECTION_WINDOW seconds at a
+  // gradual rate, accumulate a compensation offset so the slow
+  // discharge doesn't look like a posture shift.
+  const maxSamples = Math.ceil(DRIFT_DETECTION_WINDOW / sampleIntervalSec);
+  state.recentFront.push(sf);
+  state.recentBack.push(sb);
+  state.recentLeft.push(sl);
+  state.recentRight.push(sr);
+  if (state.recentFront.length > maxSamples) state.recentFront.shift();
+  if (state.recentBack.length > maxSamples) state.recentBack.shift();
+  if (state.recentLeft.length > maxSamples) state.recentLeft.shift();
+  if (state.recentRight.length > maxSamples) state.recentRight.shift();
+
+  function detectDrift(history: number[]): number {
+    if (history.length < maxSamples) return 0;
+    // Check if every consecutive sample is <= the previous (consistent decline)
+    let totalDrop = 0;
+    let isConsistentDrop = true;
+    for (let j = 1; j < history.length; j++) {
+      const delta = history[j] - history[j - 1];
+      if (delta > 0.005) { // Allow tiny noise upward
+        isConsistentDrop = false;
+        break;
+      }
+      totalDrop += Math.abs(delta);
+    }
+    if (!isConsistentDrop) return 0;
+    const ratePerSec = totalDrop / DRIFT_DETECTION_WINDOW;
+    // Only compensate if rate is gradual (not a real weight shift)
+    return ratePerSec <= DRIFT_RATE_THRESHOLD ? totalDrop : 0;
+  }
+
+  state.driftCompFront = detectDrift(state.recentFront);
+  state.driftCompBack = detectDrift(state.recentBack);
+  state.driftCompLeft = detectDrift(state.recentLeft);
+  state.driftCompRight = detectDrift(state.recentRight);
+
+  // Apply drift compensation — add back the lost voltage so it
+  // doesn't create artificial imbalance
+  sf += state.driftCompFront;
+  sb += state.driftCompBack;
+  sl += state.driftCompLeft;
+  sr += state.driftCompRight;
 
   // --- Step 2: Derived metrics ---
   const totalPressure = sf + sb + sl + sr;
