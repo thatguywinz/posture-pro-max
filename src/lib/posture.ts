@@ -44,10 +44,10 @@ export function parseSerialData(line: string): PressureData | null {
   const match = line.match(regex);
   if (!match) return null;
   return {
-    front: parseFloat(match[1]),
-    back: parseFloat(match[2]),
-    left: parseFloat(match[3]),
-    right: parseFloat(match[4]),
+    left: parseFloat(match[1]),    // A0 = Left
+    back: parseFloat(match[2]),    // A1 = Back
+    right: parseFloat(match[3]),   // A2 = Right
+    front: parseFloat(match[4]),   // A3 = Front
     timestamp: Date.now(),
   };
 }
