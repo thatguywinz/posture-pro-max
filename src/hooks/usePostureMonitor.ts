@@ -36,7 +36,6 @@ export function usePostureMonitor() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const smoothingRef = useRef<SmoothingState>(createSmoothingState());
 
-  const isDemo = mode === "demo";
   const isConnected = mode !== "disconnected";
   const isSerial = mode === "serial";
 
