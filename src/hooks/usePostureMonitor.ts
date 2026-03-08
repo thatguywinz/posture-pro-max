@@ -190,7 +190,6 @@ export function usePostureMonitor() {
   }, []);
 
   useEffect(() => {
-    startDemo();
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       disconnectSerial();
