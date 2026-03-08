@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { PressureData, PostureAnalysis, SessionStats, analyzePosture, generateMockData, parseSerialData } from "@/lib/posture";
 
 const MAX_HISTORY = 600;
+const IMBALANCE_VOLTAGE_THRESHOLD = 2.0;
+const IMBALANCE_DIFF_THRESHOLD = 0.25;
 
 type ConnectionMode = "disconnected" | "demo" | "serial";
 
@@ -25,6 +27,7 @@ export function usePostureMonitor() {
   const portRef = useRef<any>(null);
   const readerRef = useRef<any>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const sustainedImbalanceRef = useRef<number>(0);
 
   const isDemo = mode === "demo";
   const isConnected = mode !== "disconnected";
@@ -32,7 +35,20 @@ export function usePostureMonitor() {
 
   const processData = useCallback((data: PressureData) => {
     setCurrent(data);
-    const result = analyzePosture(data, calibration);
+
+    // Track sustained imbalance: only count if max voltage >= 2V and there's a real diff
+    const maxV = Math.max(data.front, data.back, data.left, data.right);
+    const fbDiff = Math.abs(data.front - data.back);
+    const lrDiff = Math.abs(data.left - data.right);
+    const hasImbalance = maxV >= IMBALANCE_VOLTAGE_THRESHOLD && (fbDiff > IMBALANCE_DIFF_THRESHOLD || lrDiff > IMBALANCE_DIFF_THRESHOLD);
+
+    if (hasImbalance) {
+      sustainedImbalanceRef.current += 0.5; // each tick is 500ms
+    } else {
+      sustainedImbalanceRef.current = 0;
+    }
+
+    const result = analyzePosture(data, calibration, sustainedImbalanceRef.current);
     setAnalysis(result);
 
     setHistory(prev => {
