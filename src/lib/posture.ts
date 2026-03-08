@@ -100,6 +100,12 @@ const STATUS_THRESHOLD = 0.18;
 /** Normalized imbalance threshold for slouch detection. */
 const SLOUCH_THRESHOLD = 0.28;
 
+/** Duration (seconds) of consistent decline before treating it as charge drift. */
+const DRIFT_DETECTION_WINDOW = 3.0;
+
+/** Max voltage drop per second to qualify as gradual drift (not a real shift). */
+const DRIFT_RATE_THRESHOLD = 0.15;
+
 // ============================================================
 // Smoothing state — maintained across calls
 // ============================================================
