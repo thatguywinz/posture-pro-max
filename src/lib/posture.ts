@@ -421,7 +421,7 @@ export function analyzePosture(
 // ============================================================
 
 const DEMO_CYCLE_DURATION = 10000; // 10 seconds per direction
-const DEMO_PHASES: Array<"left" | "right" | "front" | "back"> = ["left", "right", "front", "back"];
+const DEMO_PHASES: Array<"balanced" | "left" | "right" | "front" | "back"> = ["balanced", "left", "right", "front", "back"];
 let demoStartTime: number | null = null;
 
 export function generateMockData(): PressureData {
