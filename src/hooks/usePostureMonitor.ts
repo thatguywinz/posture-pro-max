@@ -22,8 +22,8 @@ export function usePostureMonitor() {
   });
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const portRef = useRef<SerialPort | null>(null);
-  const readerRef = useRef<ReadableStreamDefaultReader<string> | null>(null);
+  const portRef = useRef<any>(null);
+  const readerRef = useRef<any>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const isDemo = mode === "demo";
