@@ -12,7 +12,7 @@ import {
 
 const MAX_HISTORY = 600;
 
-type ConnectionMode = "disconnected" | "demo" | "serial";
+type ConnectionMode = "disconnected" | "serial";
 
 export function usePostureMonitor() {
   const [mode, setMode] = useState<ConnectionMode>("disconnected");
