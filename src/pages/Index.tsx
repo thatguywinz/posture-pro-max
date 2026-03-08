@@ -6,27 +6,29 @@ import RecommendationsPanel from "@/components/RecommendationsPanel";
 import TrendsChart from "@/components/TrendsChart";
 import SpineVisualization from "@/components/SpineVisualization";
 import PostureAlert from "@/components/PostureAlert";
-import { Info, Usb, Unplug } from "lucide-react";
+import { Activity, RotateCcw, Play, Pause, Info, Usb, Unplug } from "lucide-react";
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import spineLogo from "@/assets/spine-logo.png";
 
+// Posture Pro Dashboard v4 — Smoothed scoring
 const Index = () => {
   const {
     current, analysis, history, session,
-    isConnected, isSerial, serialError,
-    connectSerial, disconnectSerial, resetSession,
+    isDemo, isConnected, isSerial, serialError,
+    toggleDemo, connectSerial, disconnectSerial, calibrate, resetSession,
   } = usePostureMonitor();
 
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const connectionStatus = isSerial
     ? "Arduino Connected"
-    : "Waiting for Data";
+    : isDemo ? "Demo Mode" : "Waiting for Data";
 
   const statusColor = isSerial
     ? "bg-glow-good/20 text-glow-good border-glow-good/30"
-    : "bg-glow-warning/20 text-glow-warning border-glow-warning/30";
+    : isConnected
+      ? "bg-primary/20 text-primary border-primary/30"
+      : "bg-glow-warning/20 text-glow-warning border-glow-warning/30";
 
   return (
     <div className="min-h-screen bg-background px-4 py-6 md:px-8 lg:px-12">
@@ -40,8 +42,8 @@ const Index = () => {
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center glow-primary overflow-hidden">
-                <img src={spineLogo} alt="Posture Pro logo" className="w-7 h-7 object-contain" />
+              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center glow-primary">
+                <Activity className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
@@ -71,10 +73,25 @@ const Index = () => {
               </Tooltip>
 
               <button
+                onClick={calibrate}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-colors flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" /> Calibrate
+              </button>
+
+              <button
                 onClick={resetSession}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-colors"
               >
                 Reset Session
+              </button>
+
+              <button
+                onClick={toggleDemo}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors flex items-center gap-1.5"
+              >
+                {isDemo ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                {isDemo ? "Stop Demo" : "Start Demo"}
               </button>
 
               {isSerial ? (
