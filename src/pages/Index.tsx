@@ -11,6 +11,7 @@ import { Activity, RotateCcw, Play, Pause, Info, Usb, Unplug } from "lucide-reac
 import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+// Posture Pressure Monitor Dashboard
 const Index = () => {
   const {
     current, analysis, history, session,
