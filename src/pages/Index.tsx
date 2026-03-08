@@ -40,8 +40,8 @@ const Index = () => {
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center glow-primary">
-                <Activity className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center glow-primary overflow-hidden">
+                <img src={spineLogo} alt="Posture Pro logo" className="w-7 h-7 object-contain" />
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
