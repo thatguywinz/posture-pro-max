@@ -53,7 +53,7 @@ export function parseSerialData(line: string): PressureData | null {
   };
 }
 
-export function analyzePosture(data: PressureData, calibration?: PressureData): PostureAnalysis {
+export function analyzePosture(data: PressureData, calibration?: PressureData, sustainedImbalanceSeconds: number = 0): PostureAnalysis {
   let { front, back, left, right } = data;
   if (calibration) {
     front -= calibration.front;
@@ -68,6 +68,10 @@ export function analyzePosture(data: PressureData, calibration?: PressureData): 
   const fbImbalance = total > 0 ? Math.abs(fbDiff) / (total / 2) : 0;
   const lrImbalance = total > 0 ? Math.abs(lrDiff) / (total / 2) : 0;
 
+  const maxVoltage = Math.max(data.front, data.back, data.left, data.right);
+  const hasSignificantPressure = maxVoltage >= MIN_VOLTAGE_FOR_PENALTY;
+  const isSustained = sustainedImbalanceSeconds >= 5;
+
   let status: PostureStatus = "balanced";
   let label = "Balanced Posture";
   let explanation = "Your weight is evenly distributed. Great posture!";
@@ -78,50 +82,57 @@ export function analyzePosture(data: PressureData, calibration?: PressureData): 
     label = "Unstable / Repositioning";
     explanation = "Very low pressure detected. You may be repositioning or not seated.";
     recommendations.push("Sit down firmly and center your weight.");
-  } else if (fbDiff > SLOUCH_THRESHOLD && front > back * 1.5) {
-    status = "slouch-risk";
-    label = "Slouch Risk";
-    explanation = "Significant forward pressure suggests you may be slouching. This increases lower-back strain.";
-    recommendations.push("Sit back against the chair backrest.");
-    recommendations.push("Engage your core to support your spine.");
-  } else if (fbDiff > THRESHOLD) {
-    status = "leaning-forward";
-    label = "Leaning Forward";
-    explanation = "More pressure on the front of the seat. You're leaning forward which can strain your lower back.";
-    recommendations.push("Sit slightly back in the chair.");
-    recommendations.push("Reduce forward lean to lower lower-back strain.");
-  } else if (fbDiff < -THRESHOLD) {
-    status = "leaning-backward";
-    label = "Leaning Backward";
-    explanation = "More pressure on the back of the seat. While reclining is okay briefly, sustained lean may indicate poor engagement.";
-    recommendations.push("Sit upright with feet flat on the floor.");
-  } else if (lrDiff > THRESHOLD) {
-    status = "leaning-left";
-    label = "Leaning Left";
-    explanation = "More pressure on the left side. Uneven hip loading can cause discomfort over time.";
-    recommendations.push("Shift weight evenly across both hips.");
-    recommendations.push("Re-center posture.");
-  } else if (lrDiff < -THRESHOLD) {
-    status = "leaning-right";
-    label = "Leaning Right";
-    explanation = "More pressure on the right side. Try to balance your weight.";
-    recommendations.push("Shift weight evenly across both hips.");
-    recommendations.push("Re-center posture.");
-  } else if (fbImbalance > 0.15 || lrImbalance > 0.15) {
-    status = "uneven";
-    label = "Uneven Distribution";
-    explanation = "Pressure isn't severely off but could be more balanced.";
-    recommendations.push("Make small adjustments to center your weight.");
+  } else if (hasSignificantPressure && isSustained) {
+    // Only flag posture issues when voltage is 2V+ AND sustained for 5+ seconds
+    if (fbDiff > SLOUCH_THRESHOLD && front > back * 1.5) {
+      status = "slouch-risk";
+      label = "Slouch Risk";
+      explanation = "Significant forward pressure suggests you may be slouching. This increases lower-back strain.";
+      recommendations.push("Sit back against the chair backrest.");
+      recommendations.push("Engage your core to support your spine.");
+    } else if (fbDiff > THRESHOLD) {
+      status = "leaning-forward";
+      label = "Leaning Forward";
+      explanation = "More pressure on the front of the seat. You're leaning forward which can strain your lower back.";
+      recommendations.push("Sit slightly back in the chair.");
+      recommendations.push("Reduce forward lean to lower lower-back strain.");
+    } else if (fbDiff < -THRESHOLD) {
+      status = "leaning-backward";
+      label = "Leaning Backward";
+      explanation = "More pressure on the back of the seat. While reclining is okay briefly, sustained lean may indicate poor engagement.";
+      recommendations.push("Sit upright with feet flat on the floor.");
+    } else if (lrDiff > THRESHOLD) {
+      status = "leaning-left";
+      label = "Leaning Left";
+      explanation = "More pressure on the left side. Uneven hip loading can cause discomfort over time.";
+      recommendations.push("Shift weight evenly across both hips.");
+      recommendations.push("Re-center posture.");
+    } else if (lrDiff < -THRESHOLD) {
+      status = "leaning-right";
+      label = "Leaning Right";
+      explanation = "More pressure on the right side. Try to balance your weight.";
+      recommendations.push("Shift weight evenly across both hips.");
+      recommendations.push("Re-center posture.");
+    } else if (fbImbalance > 0.15 || lrImbalance > 0.15) {
+      status = "uneven";
+      label = "Uneven Distribution";
+      explanation = "Pressure isn't severely off but could be more balanced.";
+      recommendations.push("Make small adjustments to center your weight.");
+    }
   }
+  // If voltage < 2V or not sustained 5s, status stays "balanced" — just fluctuations
 
   if (status === "balanced") {
     recommendations.push("Good posture — maintain this position!");
   }
 
-  // Score: 100 = perfect balance, drops with imbalance
-  const imbalancePenalty = (fbImbalance + lrImbalance) * 50;
+  // Score: only penalize when there's real sustained pressure
+  const effectiveImbalance = (hasSignificantPressure && isSustained)
+    ? (fbImbalance + lrImbalance)
+    : 0;
+  const imbalancePenalty = effectiveImbalance * 50;
   const score = Math.max(0, Math.min(100, Math.round(100 - imbalancePenalty)));
-  const balanceScore = Math.max(0, Math.min(100, Math.round(100 - (fbImbalance + lrImbalance) * 60)));
+  const balanceScore = Math.max(0, Math.min(100, Math.round(100 - effectiveImbalance * 60)));
 
   return { status, label, score, balanceScore, explanation, recommendations, fbImbalance, lrImbalance };
 }
