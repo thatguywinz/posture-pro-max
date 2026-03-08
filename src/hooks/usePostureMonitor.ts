@@ -6,6 +6,7 @@ import {
   SmoothingState,
   analyzePosture,
   generateMockData,
+  resetDemoTimer,
   parseSerialData,
   createSmoothingState,
   SUSTAINED_WARNING_DURATION,
@@ -77,6 +78,7 @@ export function usePostureMonitor() {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setMode("demo");
     setSerialError(null);
+    resetDemoTimer();
     smoothingRef.current = createSmoothingState();
     intervalRef.current = setInterval(() => {
       processData(generateMockData());
