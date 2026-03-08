@@ -36,9 +36,10 @@ export interface SessionStats {
   currentBalancedStreak: number;
 }
 
-const THRESHOLD = 0.25;
-const SLOUCH_THRESHOLD = 0.35;
-const MIN_VOLTAGE_FOR_PENALTY = 2.0; // Don't penalize unless a sensor hits 2V+
+// Thresholds (voltage differences)
+const LEAN_THRESHOLD = 0.20;
+const SLOUCH_THRESHOLD = 0.30;
+const NOISE_FLOOR = 0.08;
 
 export function parseSerialData(line: string): PressureData | null {
   const regex = /A0:\s*([\d.]+)\s*V\s*\|\s*A1:\s*([\d.]+)\s*V\s*\|\s*A2:\s*([\d.]+)\s*V\s*\|\s*A3:\s*([\d.]+)\s*V/;
@@ -53,7 +54,7 @@ export function parseSerialData(line: string): PressureData | null {
   };
 }
 
-export function analyzePosture(data: PressureData, calibration?: PressureData, sustainedImbalanceSeconds: number = 0): PostureAnalysis {
+export function analyzePosture(data: PressureData, calibration?: PressureData): PostureAnalysis {
   let { front, back, left, right } = data;
   if (calibration) {
     front -= calibration.front;
@@ -63,76 +64,78 @@ export function analyzePosture(data: PressureData, calibration?: PressureData, s
   }
 
   const total = front + back + left + right;
+  const avg = total / 4;
   const fbDiff = front - back;
   const lrDiff = left - right;
-  const fbImbalance = total > 0 ? Math.abs(fbDiff) / (total / 2) : 0;
-  const lrImbalance = total > 0 ? Math.abs(lrDiff) / (total / 2) : 0;
 
-  const maxVoltage = Math.max(data.front, data.back, data.left, data.right);
-  const hasSignificantPressure = maxVoltage >= MIN_VOLTAGE_FOR_PENALTY;
-  const isSustained = sustainedImbalanceSeconds >= 5;
+  const fbImbalance = avg > 0 ? Math.abs(fbDiff) / avg : 0;
+  const lrImbalance = avg > 0 ? Math.abs(lrDiff) / avg : 0;
+
+  const deviations = [front, back, left, right].map(v => Math.abs(v - avg));
+  const avgDeviation = deviations.reduce((a, b) => a + b, 0) / 4;
 
   let status: PostureStatus = "balanced";
   let label = "Balanced Posture";
   let explanation = "Your weight is evenly distributed. Great posture!";
   const recommendations: string[] = [];
 
-  if (total < 0.5) {
+  if (total < 0.3) {
     status = "unstable";
-    label = "Unstable / Repositioning";
-    explanation = "Very low pressure detected. You may be repositioning or not seated.";
+    label = "Not Seated";
+    explanation = "Very low pressure detected. You may not be seated.";
     recommendations.push("Sit down firmly and center your weight.");
-  } else if (hasSignificantPressure && isSustained) {
-    // Only flag posture issues when voltage is 2V+ AND sustained for 5+ seconds
-    if (fbDiff > SLOUCH_THRESHOLD && front > back * 1.5) {
-      status = "slouch-risk";
-      label = "Slouch Risk";
-      explanation = "Significant forward pressure suggests you may be slouching. This increases lower-back strain.";
-      recommendations.push("Sit back against the chair backrest.");
-      recommendations.push("Engage your core to support your spine.");
-    } else if (fbDiff > THRESHOLD) {
-      status = "leaning-forward";
-      label = "Leaning Forward";
-      explanation = "More pressure on the front of the seat. You're leaning forward which can strain your lower back.";
-      recommendations.push("Sit slightly back in the chair.");
-      recommendations.push("Reduce forward lean to lower lower-back strain.");
-    } else if (fbDiff < -THRESHOLD) {
-      status = "leaning-backward";
-      label = "Leaning Backward";
-      explanation = "More pressure on the back of the seat. While reclining is okay briefly, sustained lean may indicate poor engagement.";
-      recommendations.push("Sit upright with feet flat on the floor.");
-    } else if (lrDiff > THRESHOLD) {
-      status = "leaning-left";
-      label = "Leaning Left";
-      explanation = "More pressure on the left side. Uneven hip loading can cause discomfort over time.";
-      recommendations.push("Shift weight evenly across both hips.");
-      recommendations.push("Re-center posture.");
-    } else if (lrDiff < -THRESHOLD) {
-      status = "leaning-right";
-      label = "Leaning Right";
-      explanation = "More pressure on the right side. Try to balance your weight.";
-      recommendations.push("Shift weight evenly across both hips.");
-      recommendations.push("Re-center posture.");
-    } else if (fbImbalance > 0.15 || lrImbalance > 0.15) {
-      status = "uneven";
-      label = "Uneven Distribution";
-      explanation = "Pressure isn't severely off but could be more balanced.";
-      recommendations.push("Make small adjustments to center your weight.");
-    }
+  } else if (Math.abs(fbDiff) > SLOUCH_THRESHOLD && front > back * 1.4) {
+    status = "slouch-risk";
+    label = "Slouch Risk";
+    explanation = "Significant forward pressure suggests slouching, increasing lower-back strain.";
+    recommendations.push("Sit back against the chair backrest.");
+    recommendations.push("Engage your core to support your spine.");
+  } else if (fbDiff > LEAN_THRESHOLD) {
+    status = "leaning-forward";
+    label = "Leaning Forward";
+    explanation = "More pressure on the front. Leaning forward can strain your lower back.";
+    recommendations.push("Sit slightly back in the chair.");
+    recommendations.push("Reduce forward lean to lower lower-back strain.");
+  } else if (fbDiff < -LEAN_THRESHOLD) {
+    status = "leaning-backward";
+    label = "Leaning Backward";
+    explanation = "More pressure on the back. Sustained reclining may reduce core engagement.";
+    recommendations.push("Sit upright with feet flat on the floor.");
+  } else if (lrDiff > LEAN_THRESHOLD) {
+    status = "leaning-left";
+    label = "Leaning Left";
+    explanation = "More pressure on the left side. Uneven hip loading can cause discomfort.";
+    recommendations.push("Shift weight evenly across both hips.");
+    recommendations.push("Re-center posture.");
+  } else if (lrDiff < -LEAN_THRESHOLD) {
+    status = "leaning-right";
+    label = "Leaning Right";
+    explanation = "More pressure on the right side. Try to balance your weight.";
+    recommendations.push("Shift weight evenly across both hips.");
+    recommendations.push("Re-center posture.");
+  } else if (avgDeviation > NOISE_FLOOR && (fbImbalance > 0.12 || lrImbalance > 0.12)) {
+    status = "uneven";
+    label = "Slightly Uneven";
+    explanation = "Pressure distribution could be more balanced.";
+    recommendations.push("Make small adjustments to center your weight.");
   }
-  // If voltage < 2V or not sustained 5s, status stays "balanced" — just fluctuations
 
   if (status === "balanced") {
     recommendations.push("Good posture — maintain this position!");
   }
 
-  // Score: only penalize when there's real sustained pressure
-  const effectiveImbalance = (hasSignificantPressure && isSustained)
-    ? (fbImbalance + lrImbalance)
-    : 0;
-  const imbalancePenalty = effectiveImbalance * 50;
-  const score = Math.max(0, Math.min(100, Math.round(100 - imbalancePenalty)));
-  const balanceScore = Math.max(0, Math.min(100, Math.round(100 - effectiveImbalance * 60)));
+  // POSTURE SCORE: how symmetrical all 4 readings are
+  const symmetryPenalty = avg > 0 ? (avgDeviation / avg) * 100 : 0;
+  const leanPenalty = (Math.abs(fbDiff) + Math.abs(lrDiff)) * 25;
+  const rawPenalty = Math.min(100, symmetryPenalty + leanPenalty);
+  const curvedPenalty = rawPenalty < 10 ? rawPenalty * 0.3 : rawPenalty;
+  const score = Math.max(0, Math.min(100, Math.round(100 - curvedPenalty)));
+
+  // BALANCE SCORE: left-right and front-back symmetry
+  const fbBalancePenalty = avg > 0 ? (Math.abs(fbDiff) / avg) * 60 : 0;
+  const lrBalancePenalty = avg > 0 ? (Math.abs(lrDiff) / avg) * 60 : 0;
+  const totalBalancePenalty = Math.min(100, fbBalancePenalty + lrBalancePenalty);
+  const balanceScore = Math.max(0, Math.min(100, Math.round(100 - totalBalancePenalty)));
 
   return { status, label, score, balanceScore, explanation, recommendations, fbImbalance, lrImbalance };
 }
@@ -140,7 +143,6 @@ export function analyzePosture(data: PressureData, calibration?: PressureData, s
 export function generateMockData(): PressureData {
   const base = 1.0 + Math.random() * 0.5;
   const variance = () => (Math.random() - 0.5) * 0.6;
-  // Add occasional posture changes
   const lean = Math.random();
   let front = base + variance();
   let back = base + variance();
@@ -148,13 +150,12 @@ export function generateMockData(): PressureData {
   let right = base + variance();
 
   if (lean > 0.7) {
-    front += 0.3 + Math.random() * 0.3; // lean forward
+    front += 0.3 + Math.random() * 0.3;
   } else if (lean > 0.55) {
-    left += 0.25 + Math.random() * 0.2; // lean left
+    left += 0.25 + Math.random() * 0.2;
   } else if (lean > 0.4) {
-    right += 0.25 + Math.random() * 0.2; // lean right
+    right += 0.25 + Math.random() * 0.2;
   }
-  // else balanced
 
   return {
     front: Math.max(0, parseFloat(front.toFixed(2))),
